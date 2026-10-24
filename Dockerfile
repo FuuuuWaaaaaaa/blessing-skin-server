@@ -19,7 +19,7 @@ FROM node:alpine as frontend
 WORKDIR /app
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN npm install --global yarn && yarn install --frozen-lockfile
 
 COPY postcss.config.js tsconfig.build.json tsconfig.json webpack.config.ts ./
 COPY tools/*Plugin.ts ./tools/
@@ -60,12 +60,12 @@ RUN composer dump-autoload -o --no-dev -n && \
     sed 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' -i storage/.env && \
     sed 's/DB_DATABASE=blessingskin/DB_DATABASE=\/app\/storage\/database\.db/' -i storage/.env
 
-FROM php:8-apache
+FROM php:8.4-apache
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/install-php-extensions && \
-    install-php-extensions gd zip
+    install-php-extensions gd imagick zip
 
 WORKDIR /app
 

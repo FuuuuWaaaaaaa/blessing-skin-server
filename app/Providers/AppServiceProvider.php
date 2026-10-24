@@ -49,8 +49,32 @@ class AppServiceProvider extends ServiceProvider
          * needs "setTrustedProxies()" which sucks when load balancer is enabled.
          */
         $isRequestSecure = $request->server('HTTPS') === 'on'
-            || $request->server('HTTP_X_FORWARDED_PROTO') === 'https'
-            || $request->server('HTTP_X_FORWARDED_SSL') === 'on';
+            || strtolower((string) $request->header('X-Forwarded-Proto')) === 'https'
+            || strtolower((string) $request->header('X-Forwarded-Ssl')) === 'on';
+
+        // Laravel sees the internal host and port unless the proxy headers are
+        // trusted. Use the public forwarded host directly so generated URLs
+        // retain a non-standard port such as :2333.
+        $forwardedHost = $request->header('X-Forwarded-Host');
+        if (is_string($forwardedHost) && $forwardedHost !== '') {
+            $forwardedHost = trim(explode(',', $forwardedHost)[0]);
+            $parsedForwardedHost = parse_url('//'.$forwardedHost);
+            $forwardedPort = $request->header('X-Forwarded-Port');
+            if (
+                is_array($parsedForwardedHost)
+                && isset($parsedForwardedHost['host'])
+                && !isset($parsedForwardedHost['port'])
+                && is_string($forwardedPort)
+                && ctype_digit($forwardedPort)
+                && (int) $forwardedPort > 0
+                && (int) $forwardedPort <= 65535
+            ) {
+                $forwardedHost .= ':'.$forwardedPort;
+            }
+            if (is_array($parsedForwardedHost) && isset($parsedForwardedHost['host'])) {
+                URL::forceRootUrl(($isRequestSecure ? 'https' : 'http').'://'.$forwardedHost);
+            }
+        }
 
         if (option('force_ssl') || $isRequestSecure) {
             URL::forceScheme('https');

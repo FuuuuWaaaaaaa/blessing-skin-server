@@ -8,6 +8,21 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class HeadComposerTest extends TestCase
 {
+    public function testGeneratedUrlsKeepForwardedPort()
+    {
+        $request = request();
+        $request->headers->set('X-Forwarded-Host', 'skins.example.test');
+        $request->headers->set('X-Forwarded-Port', '2333');
+        $request->headers->set('X-Forwarded-Proto', 'https');
+
+        $provider = new \App\Providers\AppServiceProvider(app());
+        $method = new \ReflectionMethod($provider, 'configureUrlGenerator');
+        $method->setAccessible(true);
+        $method->invoke($provider, $request);
+
+        $this->assertSame('https://skins.example.test:2333/a', url('/a'));
+    }
+
     use DatabaseTransactions;
 
     public function testAddFavicon()

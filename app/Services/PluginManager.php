@@ -330,8 +330,7 @@ class PluginManager
                         ? [$name => compact('version', 'constraint')]
                         : [];
                 } elseif ($name == 'php') {
-                    preg_match('/(\d+\.\d+\.\d+)/', PHP_VERSION, $matches);
-                    $version = $matches[1];
+                    $version = PHP_VERSION;
 
                     return (!Semver::satisfies($version, $constraint))
                         ? [$name => compact('version', 'constraint')]

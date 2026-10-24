@@ -67,6 +67,13 @@ class Option
             }
         } else {
             $this->items->put($key, $value);
+            // The options cache is loaded before every new request.  Keep it
+            // in sync when an option is changed through the admin panel;
+            // otherwise a new site_url (especially one containing :2333)
+            // is ignored until the cache is manually rebuilt.
+            if ($key === 'site_url') {
+                app(Filesystem::class)->delete(storage_path('options.php'));
+            }
             try {
                 DB::table('options')->updateOrInsert(
                     ['option_name' => $key],
