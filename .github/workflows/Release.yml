@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '*.*.*'
+  workflow_dispatch:
 
 jobs:
   release:
@@ -21,6 +22,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Read package version
+        id: package
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
       - name: Build web deployment package
         run: bash tools/release.sh
       - name: Publish GitHub release
@@ -28,5 +32,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: blessing-skin-server-${{ github.ref_name }}.zip
+          files: blessing-skin-server-${{ steps.package.outputs.version }}.zip
           generate_release_notes: false
