@@ -8,7 +8,7 @@ class AddOAuthProviderField extends Migration
 {
     public function up()
     {
-        if (!Schema::hasColumn('oauth_clients', 'provider')) {
+        if (Schema::hasTable('oauth_clients') && !Schema::hasColumn('oauth_clients', 'provider')) {
             Schema::table('oauth_clients', function (Blueprint $table) {
                 $table->string('provider')->after('secret')->nullable();
             });

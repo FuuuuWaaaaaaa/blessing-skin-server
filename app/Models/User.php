@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
-use Lorisleiva\LaravelSearchString\Concerns\SearchString;
+use App\Models\Concerns\SearchString;
 
 /**
  * @property int         $uid

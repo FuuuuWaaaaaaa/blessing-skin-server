@@ -1,0 +1,13 @@
+<?php
+
+namespace Blessing;
+
+use Illuminate\Support\ServiceProvider;
+
+class FilterServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->singleton(Filter::class);
+    }
+}
