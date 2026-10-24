@@ -63,10 +63,14 @@ class SkinlibController extends Controller
 
         // Available filters: skin, steve, alex, cape
         $type = $request->input('filter', 'skin');
-        $uploader = $request->input('uploader');
-        $keyword = $request->input('keyword');
-        $sort = $request->input('sort', 'time');
-        $sortBy = $sort == 'time' ? 'upload_at' : $sort;
+        $uploader = $request->integer('uploader') ?: null;
+        $keyword = trim((string) $request->input('keyword', ''));
+        $keyword = mb_substr($keyword, 0, 100);
+        $sortBy = match ($request->input('sort', 'time')) {
+            'likes' => 'likes',
+            'upload_at', 'time' => 'upload_at',
+            default => 'upload_at',
+        };
 
         return Texture::orderBy($sortBy, 'desc')
             ->when(

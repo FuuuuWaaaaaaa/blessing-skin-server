@@ -59,6 +59,7 @@ class NotificationsController extends Controller
             ->user()
             ->unreadNotifications
             ->first(fn ($notification) => $notification->id === $id);
+        abort_unless($notification, 404);
         $notification->markAsRead();
 
         $converter = new GithubFlavoredMarkdownConverter();

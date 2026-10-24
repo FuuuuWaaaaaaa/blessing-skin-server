@@ -11,30 +11,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Build and create archive
-        run: ./tools/release.ps1
-        shell: pwsh
-        env:
-          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          coverage: none
+          extensions: mbstring, dom, fileinfo, sqlite, gd, zip, imagick
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build web deployment package
+        run: bash tools/release.sh
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-      - name: Upload release asset
-        id: upload_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./blessing-skin-server-${{ steps.get_version.outputs.VERSION }}.zip
-          asset_name: blessing-skin-server-${{ steps.get_version.outputs.VERSION }}.zip
-          asset_content_type: application/zip
+          files: blessing-skin-server-${{ github.ref_name }}.zip
+          generate_release_notes: true

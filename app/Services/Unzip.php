@@ -25,11 +25,41 @@ class Unzip
         $zip = $this->zipper;
         $resource = $zip->open($file);
 
-        if ($resource === true && $zip->extractTo($destination)) {
-            $zip->close();
-            $this->filesystem->delete($file);
-        } else {
+        if ($resource !== true) {
             throw new Exception(trans('admin.download.errors.unzip'));
         }
+
+        try {
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $name = $zip->getNameIndex($index);
+                $parts = is_string($name) ? preg_split('/[\\\\\/]+/', $name) : false;
+                if (
+                    !is_string($name)
+                    || $name === ''
+                    || !is_array($parts)
+                    || $parts[0] === ''
+                    || in_array('..', $parts, true)
+                ) {
+                    throw new Exception(trans('admin.download.errors.unzip'));
+                }
+
+                $system = 0;
+                $attributes = 0;
+                if ($zip->getExternalAttributesIndex($index, $system, $attributes)) {
+                    $fileType = ($attributes >> 16) & 0xF000;
+                    if ($fileType === 0xA000) {
+                        throw new Exception(trans('admin.download.errors.unzip'));
+                    }
+                }
+            }
+
+            if (!$zip->extractTo($destination)) {
+                throw new Exception(trans('admin.download.errors.unzip'));
+            }
+        } finally {
+            $zip->close();
+        }
+
+        $this->filesystem->delete($file);
     }
 }

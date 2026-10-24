@@ -41,6 +41,7 @@ class TextureController extends Controller
 
     public function previewByHash(Minecraft $minecraft, Request $request, $hash)
     {
+        $this->ensureSafeTextureKey($hash);
         $texture = Texture::where('hash', $hash)->firstOrFail();
 
         return $this->preview($minecraft, $request, $texture);
@@ -56,7 +57,7 @@ class TextureController extends Controller
         $disk = Storage::disk('textures');
         abort_if($disk->missing($hash), 404);
 
-        $height = (int) $request->query('height', 200);
+        $height = min(max((int) $request->query('height', 200), 1), 2048);
         $now = Carbon::now();
         $response = Cache::remember(
             'preview-t'.$tid."-$format",
@@ -92,6 +93,7 @@ class TextureController extends Controller
 
     public function texture(string $hash)
     {
+        $this->ensureSafeTextureKey($hash);
         $disk = Storage::disk('textures');
         abort_if($disk->missing($hash), 404);
 
@@ -121,6 +123,7 @@ class TextureController extends Controller
 
     public function avatarByHash(Minecraft $minecraft, Request $request, $hash)
     {
+        $this->ensureSafeTextureKey($hash);
         $texture = Texture::where('hash', $hash)->first();
 
         return $this->avatar($minecraft, $request, $texture);
@@ -139,7 +142,7 @@ class TextureController extends Controller
             return abort(422);
         }
 
-        $size = (int) $request->query('size', 100);
+        $size = min(max((int) $request->query('size', 100), 1), 1024);
         $mode = $request->has('3d') ? '3d' : '2d';
         $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
         $format = $usePNG ? 'png' : 'webp';
@@ -176,5 +179,14 @@ class TextureController extends Controller
         );
 
         return $response;
+    }
+
+    private function ensureSafeTextureKey(string $hash): void
+    {
+        abort_unless(
+            preg_match('/\A[a-zA-Z0-9._-]+\z/', $hash) === 1
+                && basename($hash) === $hash,
+            404
+        );
     }
 }

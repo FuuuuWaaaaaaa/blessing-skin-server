@@ -184,14 +184,17 @@ class ClosetController extends Controller
         }
 
         $texture = Texture::find($tid);
-        $texture->likes--;
-        $texture->save();
+        if ($texture) {
+            $texture->likes--;
+            $texture->save();
+        }
 
         $dispatcher->dispatch('closet.removed', [$texture, $user]);
 
-        $uploader = User::find($texture->uploader);
-        $uploader->score -= option('score_award_per_like', 0);
-        $uploader->save();
+        if ($texture && ($uploader = User::find($texture->uploader))) {
+            $uploader->score -= option('score_award_per_like', 0);
+            $uploader->save();
+        }
 
         return json(trans('user.closet.remove.success'), 0);
     }

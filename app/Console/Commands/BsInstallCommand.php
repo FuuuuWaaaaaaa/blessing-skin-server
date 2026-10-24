@@ -21,7 +21,13 @@ class BsInstallCommand extends Command
             return;
         }
 
-        $this->call('migrate', ['--force' => true]);
+        $this->call('migrate', [
+            '--force' => true,
+            '--path' => [
+                'database/migrations',
+                'vendor/laravel/passport/database/migrations',
+            ],
+        ]);
         if (!$this->getLaravel()->runningUnitTests()) {
             // @codeCoverageIgnoreStart
             $this->call('key:generate');

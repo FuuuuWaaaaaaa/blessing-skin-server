@@ -15,10 +15,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('cipher', 'App\Services\Cipher\\'.config('secure.cipher'));
         $this->app->singleton(Services\Option::class);
         $this->app->alias(Services\Option::class, 'options');
+        $this->loadMigrationsFrom(base_path('vendor/laravel/passport/database/migrations'));
     }
 
     public function boot(Request $request): void
     {
+        $textureDirectory = storage_path('textures');
+        if (!is_dir($textureDirectory)) {
+            mkdir($textureDirectory, 0755, true);
+        }
+
         Paginator::useBootstrap();
 
         $this->configureUrlGenerator($request);

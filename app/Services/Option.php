@@ -72,7 +72,10 @@ class Option
             // otherwise a new site_url (especially one containing :2333)
             // is ignored until the cache is manually rebuilt.
             if ($key === 'site_url') {
-                app(Filesystem::class)->delete(storage_path('options.php'));
+                $cachePath = storage_path('options.php');
+                if (is_file($cachePath)) {
+                    unlink($cachePath);
+                }
             }
             try {
                 DB::table('options')->updateOrInsert(

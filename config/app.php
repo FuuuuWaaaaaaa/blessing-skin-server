@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'version' => '6.0.6',
+    'version' => '6.0.7',
 
     /*
     |--------------------------------------------------------------------------
@@ -192,6 +192,7 @@ return [
         App\Providers\PluginServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        Blessing\FilterServiceProvider::class,
     ])->toArray(),
 
     /*

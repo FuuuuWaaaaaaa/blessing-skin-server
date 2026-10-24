@@ -61,12 +61,13 @@ const cssViewer = css`
 const Viewer: React.FC<Props> = (props) => {
   const { initPositionZ = 70 } = props
 
-  const viewRef: React.MutableRefObject<skinview3d.SkinViewer> = useRef(null!)
+  const viewRef = useRef<skinview3d.SkinViewer | null>(null)
   const containerRef = useRef<HTMLCanvasElement>(null)
 
   const [paused, setPaused] = useState(false)
   const [animation, setAnimation] = useState(0)
   const [bgPicture, setBgPicture] = useState(-1)
+  const [viewerUnavailable, setViewerUnavailable] = useState(false)
 
   const indicator = (() => {
     const { skin, cape } = props
@@ -82,36 +83,51 @@ const Viewer: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const container = containerRef.current!
-    const viewer = new skinview3d.SkinViewer({
-      canvas: container,
-      width: container.clientWidth,
-      height: container.clientHeight,
-      skin: props.skin || SkinSteve,
-      cape: props.cape || undefined,
-      model: props.isAlex ? 'slim' : 'default',
-      zoom: initPositionZ / 100,
-    })
-    viewer.autoRotate = true
+    let viewer: skinview3d.SkinViewer | null = null
 
-    if (document.body.classList.contains('dark-mode')) {
-      viewer.background = '#6c757d'
+    try {
+      viewer = new skinview3d.SkinViewer({
+        canvas: container,
+        width: container.clientWidth,
+        height: container.clientHeight,
+        skin: props.skin || SkinSteve,
+        cape: props.cape || undefined,
+        model: props.isAlex ? 'slim' : 'default',
+        zoom: initPositionZ / 100,
+      })
+      viewer.autoRotate = true
+
+      if (document.body.classList.contains('dark-mode')) {
+        viewer.background = '#6c757d'
+      }
+
+      viewRef.current = viewer
+    } catch {
+      // Keep the surrounding page usable when WebGL is unavailable.
+      setViewerUnavailable(true)
     }
 
-    viewRef.current = viewer
-
     return () => {
-      viewer.dispose()
+      viewer?.dispose()
+      viewRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const [containerWrapperRef, containerMeasure] = useMeasure<HTMLDivElement>()
   useEffect(() => {
-    viewRef.current.setSize(containerMeasure.width, containerMeasure.height)
+    const viewer = viewRef.current
+    if (!viewer || !containerMeasure.width || !containerMeasure.height) {
+      return
+    }
+    viewer.setSize(containerMeasure.width, containerMeasure.height)
   })
 
   useEffect(() => {
     const viewer = viewRef.current
+    if (!viewer) {
+      return
+    }
     viewer.loadSkin(props.skin || SkinSteve, {
       model: props.isAlex ? 'slim' : 'default',
     })
@@ -119,6 +135,9 @@ const Viewer: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const viewer = viewRef.current
+    if (!viewer) {
+      return
+    }
     if (props.cape) {
       viewer.loadCape(props.cape)
     } else {
@@ -128,6 +147,9 @@ const Viewer: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const viewer = viewRef.current
+    if (!viewer) {
+      return
+    }
     const factory = animationFactories[animation]
     if (factory === undefined) {
       viewer.animation = null
@@ -140,7 +162,10 @@ const Viewer: React.FC<Props> = (props) => {
   }, [animation])
 
   useEffect(() => {
-    const currentAnimation = viewRef.current.animation
+    const currentAnimation = viewRef.current?.animation
+    if (!currentAnimation) {
+      return
+    }
     if (currentAnimation !== null) {
       currentAnimation.paused = paused
     }
@@ -148,6 +173,9 @@ const Viewer: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const viewer = viewRef.current
+    if (!viewer) {
+      return
+    }
     const backgroundUrl = backgrounds[bgPicture]
     if (backgroundUrl === undefined) {
       viewer.background = null
@@ -161,7 +189,11 @@ const Viewer: React.FC<Props> = (props) => {
       if (paused) {
         return false
       } else {
-        viewRef.current.autoRotate = false
+        const viewer = viewRef.current
+        if (!viewer) {
+          return paused
+        }
+        viewer.autoRotate = false
         return true
       }
     })
@@ -174,11 +206,17 @@ const Viewer: React.FC<Props> = (props) => {
 
   const toggleRotate = () => {
     const viewer = viewRef.current
+    if (!viewer) {
+      return
+    }
     viewer.autoRotate = !viewer.autoRotate
   }
 
   const toggleBackEquippment = () => {
-    const player = viewRef.current.playerObject
+    const player = viewRef.current?.playerObject
+    if (!player) {
+      return
+    }
     if (player.backEquipment === 'cape') {
       player.backEquipment = 'elytra'
     } else {
@@ -187,13 +225,19 @@ const Viewer: React.FC<Props> = (props) => {
   }
 
   const setWhite = () => {
-    viewRef.current.background = '#fff'
+    if (viewRef.current) {
+      viewRef.current.background = '#fff'
+    }
   }
   const setGray = () => {
-    viewRef.current.background = '#6c757d'
+    if (viewRef.current) {
+      viewRef.current.background = '#6c757d'
+    }
   }
   const setBlack = () => {
-    viewRef.current.background = '#000'
+    if (viewRef.current) {
+      viewRef.current.background = '#000'
+    }
   }
   const setPrevPicture = () => {
     setBgPicture((index) => {
@@ -212,6 +256,38 @@ const Viewer: React.FC<Props> = (props) => {
         return index + 1
       }
     })
+  }
+
+  if (viewerUnavailable) {
+    return (
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">{t('general.texturePreview')}</h3>
+        </div>
+        <div className="card-body text-center">
+          <div className="d-flex justify-content-center align-items-center flex-wrap">
+            <img
+              src={props.skin || SkinSteve}
+              alt={t('general.skin')}
+              style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
+            />
+            {props.cape && (
+              <img
+                src={props.cape}
+                alt={t('general.cape')}
+                className="ml-3"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: 240,
+                  objectFit: 'contain',
+                }}
+              />
+            )}
+          </div>
+        </div>
+        <div className="card-footer">{props.children}</div>
+      </div>
+    )
   }
 
   return (
