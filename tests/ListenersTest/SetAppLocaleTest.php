@@ -33,4 +33,19 @@ class SetAppLocaleTest extends TestCase
 
         app()->setLocale('en');
     }
+
+    public function testInvalidLocaleCannotBePersistedOrApplied()
+    {
+        $user = User::factory()->create(['locale' => 'en']);
+        $this->get('/?lang=invalid-locale');
+        $this->actingAs($user);
+
+        $this->assertSame('en', $user->fresh()->locale);
+
+        $user->locale = 'invalid-locale';
+        $user->save();
+        app()->setLocale('en');
+        event(new \Illuminate\Auth\Events\Authenticated('web', $user->fresh()));
+        $this->assertSame('en', app()->getLocale());
+    }
 }

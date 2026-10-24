@@ -6,6 +6,7 @@ use App\Services\Plugin;
 use App\Services\PluginManager;
 use Illuminate\Cache\Repository;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Arr;
 
 class JavaScript
 {
@@ -29,6 +30,13 @@ class JavaScript
 
     public function generate(string $locale): string
     {
+        $info = Arr::get(config('locales'), $locale);
+        if (!is_array($info)) {
+            $locale = config('app.fallback_locale');
+        } elseif ($alias = Arr::get($info, 'alias')) {
+            $locale = $alias;
+        }
+
         $plugins = $this->plugins->getEnabledPlugins();
         $sourceFiles = $plugins
             ->map(fn (Plugin $plugin) => $plugin->getPath()."/lang/$locale/front-end.yml")

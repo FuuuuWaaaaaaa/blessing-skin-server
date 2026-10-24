@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class SetAppLocale
 {
@@ -20,14 +21,18 @@ class SetAppLocale
         $user = $event->user;
 
         if ($this->request->has('lang')) {
-            $user->locale = $this->request->input('lang');
-            $user->save();
+            $locale = $this->request->input('lang');
+            $info = is_string($locale) ? Arr::get(config('locales'), $locale) : null;
+            if (is_array($info) && ($locale = Arr::get($info, 'alias', $locale))) {
+                $user->locale = $locale;
+                $user->save();
+            }
 
             return;
         }
 
         $locale = $user->locale;
-        if ($locale) {
+        if (is_string($locale) && Arr::has(config('locales'), $locale)) {
             app()->setLocale($locale);
         }
     }
