@@ -56,7 +56,7 @@ Blessing Skin has only a few system requirements. In most cases, these PHP exten
 
 ## Quick Install
 
-Please read [Installation Guide](https://blessing.netlify.app/en/setup.html).
+Please read [Installation Guide](https://blessing.netlify.app/en/setup.html). During an upgrade, replace only application files and preserve the existing `storage` directory, especially `storage/textures` and `storage/database.db`; otherwise texture records can remain in the database while their image files are lost.
 
 ### Docker
 

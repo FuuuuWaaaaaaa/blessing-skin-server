@@ -56,7 +56,7 @@ Blessing Skin 对您的服务器有一定的要求。在大多数情况下，下
 
 ## 快速使用
 
-请参阅 [安装指南](https://blessing.netlify.app/setup.html)。
+请参阅 [安装指南](https://blessing.netlify.app/setup.html)。升级时只覆盖程序文件，必须保留现有的 `storage` 目录，尤其是 `storage/textures` 和 `storage/database.db`，否则数据库中的皮肤记录会保留但图片文件会丢失。
 
 ### Docker
 
