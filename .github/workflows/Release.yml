@@ -34,5 +34,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: ${{ steps.package.outputs.version }}
           files: blessing-skin-server-${{ steps.package.outputs.version }}.zip
           generate_release_notes: false
