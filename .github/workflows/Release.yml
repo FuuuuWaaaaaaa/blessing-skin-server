@@ -24,7 +24,7 @@ jobs:
           node-version: 20
       - name: Read package version
         id: package
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
       - name: Build web deployment package
         run: bash tools/release.sh
       - name: Publish GitHub release
