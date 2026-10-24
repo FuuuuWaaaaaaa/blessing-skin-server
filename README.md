@@ -40,7 +40,7 @@ Blessing Skin is an open-source project written in PHP, which means you can depl
 Blessing Skin has only a few system requirements. In most cases, these PHP extensions are already enabled.
 
 - Web server with URL rewriting enabled (Nginx or Apache)
-- PHP >= 8.1.0
+- PHP >= 8.1.0 (PHP 8.4 verified)
 - PHP Extensions
   - OpenSSL >= 1.1.1 (TLS 1.3)
   - PDO
@@ -57,6 +57,10 @@ Blessing Skin has only a few system requirements. In most cases, these PHP exten
 ## Quick Install
 
 Please read [Installation Guide](https://blessing.netlify.app/en/setup.html).
+
+### Docker
+
+The repository includes a PHP 8.4 Apache image build. Mount a persistent directory at `/app/storage`, and configure your reverse proxy to forward `Host`, `X-Forwarded-Host`, `X-Forwarded-Port`, and `X-Forwarded-Proto`. `X-Forwarded-Port` preserves non-standard public ports such as `2333` in generated URLs.
 
 ## Plugin System
 
