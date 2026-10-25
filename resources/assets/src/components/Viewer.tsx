@@ -58,6 +58,26 @@ const cssViewer = css`
   }
 `
 
+const isWebGLAvailable = () => {
+  // jsdom does not expose WebGLRenderingContext; keep the mocked viewer usable in tests.
+  if (
+    typeof window === 'undefined' ||
+    typeof document === 'undefined' ||
+    !('WebGLRenderingContext' in window)
+  ) {
+    return true
+  }
+
+  try {
+    const canvas = document.createElement('canvas')
+    return Boolean(
+      canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
+    )
+  } catch {
+    return false
+  }
+}
+
 const Viewer: React.FC<Props> = (props) => {
   const { initPositionZ = 70 } = props
 
@@ -84,6 +104,13 @@ const Viewer: React.FC<Props> = (props) => {
   useEffect(() => {
     const container = containerRef.current!
     let viewer: skinview3d.SkinViewer | null = null
+
+    if (!isWebGLAvailable()) {
+      setViewerUnavailable(true)
+      return () => {
+        viewRef.current = null
+      }
+    }
 
     try {
       viewer = new skinview3d.SkinViewer({
@@ -260,7 +287,7 @@ const Viewer: React.FC<Props> = (props) => {
 
   if (viewerUnavailable) {
     return (
-      <div className="card">
+      <div className="card" data-3d-fallback="webgl-unavailable">
         <div className="card-header">
           <h3 className="card-title">{t('general.texturePreview')}</h3>
         </div>
@@ -269,7 +296,13 @@ const Viewer: React.FC<Props> = (props) => {
             <img
               src={props.skin || SkinSteve}
               alt={t('general.skin')}
-              style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
+              style={{
+                width: 240,
+                height: 240,
+                maxWidth: '100%',
+                objectFit: 'contain',
+                imageRendering: 'pixelated',
+              }}
             />
             {props.cape && (
               <img
@@ -277,9 +310,11 @@ const Viewer: React.FC<Props> = (props) => {
                 alt={t('general.cape')}
                 className="ml-3"
                 style={{
+                  width: 240,
+                  height: 240,
                   maxWidth: '100%',
-                  maxHeight: 240,
                   objectFit: 'contain',
+                  imageRendering: 'pixelated',
                 }}
               />
             )}
