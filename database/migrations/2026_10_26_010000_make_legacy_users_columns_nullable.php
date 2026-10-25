@@ -58,7 +58,7 @@ return new class extends Migration {
                 : '';
 
             $connection->statement(sprintf(
-                'ALTER TABLE %s MODIFY %s %s NULL DEFAULT NULL%s',
+                'ALTER TABLE %s MODIFY %s %s NULL%s',
                 $table,
                 $this->quoteIdentifier($name),
                 $type,
