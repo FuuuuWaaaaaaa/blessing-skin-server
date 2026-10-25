@@ -51,13 +51,17 @@ class TextureController extends Controller
     {
         $tid = $texture->tid;
         $hash = $texture->hash;
-        $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
-        $format = $usePNG ? 'png' : 'webp';
 
         $disk = Storage::disk('textures');
         abort_if($disk->missing($hash), 404);
 
         $height = min(max((int) $request->query('height', 200), 1), 2048);
+        if (!$this->hasGdSupport()) {
+            return $this->fallbackPreview($disk->get($hash), $texture, $height, $disk->lastModified($hash));
+        }
+
+        $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
+        $format = $usePNG ? 'png' : 'webp';
         $now = Carbon::now();
         $response = Cache::remember(
             'preview-t'.$tid."-$format",
@@ -144,17 +148,42 @@ class TextureController extends Controller
 
         $size = min(max((int) $request->query('size', 100), 1), 1024);
         $mode = $request->has('3d') ? '3d' : '2d';
-        $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
-        $format = $usePNG ? 'png' : 'webp';
 
         $disk = Storage::disk('textures');
         if (is_null($texture) || $disk->missing($texture->hash)) {
+            if (!$this->hasGdSupport()) {
+                return $this->fallbackSvgResponse(
+                    (string) file_get_contents(resource_path("misc/textures/avatar$mode.png")),
+                    $size,
+                    $size,
+                    0,
+                    0,
+                    null,
+                    null,
+                );
+            }
+
+            $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
             // TODO: refactor
             return \Intervention\Image\ImageManagerStatic::configure(['driver' => 'gd'])->make(resource_path("misc/textures/avatar$mode.png"))
                 ->resize($size, $size)
                 ->response($usePNG ? 'png' : 'webp', 100);
         }
 
+        if (!$this->hasGdSupport()) {
+            return $this->fallbackSvgResponse(
+                $disk->get($texture->hash),
+                $size,
+                $size,
+                8,
+                8,
+                $disk->lastModified($texture->hash),
+                '8 8 8 8',
+            );
+        }
+
+        $usePNG = $request->has('png') || !(imagetypes() & IMG_WEBP);
+        $format = $usePNG ? 'png' : 'webp';
         $hash = $texture->hash;
         $now = Carbon::now();
         $response = Cache::remember(
@@ -188,5 +217,67 @@ class TextureController extends Controller
                 && basename($hash) === $hash,
             404
         );
+    }
+
+    private function hasGdSupport(): bool
+    {
+        return function_exists('imagetypes')
+            && function_exists('imagecreatefromstring')
+            && function_exists('imagecreatetruecolor');
+    }
+
+    private function fallbackPreview(string $contents, Texture $texture, int $height, int $lastModified)
+    {
+        [$sourceWidth, $sourceHeight] = $this->getImageDimensions($contents);
+        $width = $texture->type === 'cape'
+            ? max(1, (int) round($height * $sourceWidth / $sourceHeight))
+            : $height;
+
+        return $this->fallbackSvgResponse(
+            $contents,
+            $width,
+            $height,
+            $sourceWidth,
+            $sourceHeight,
+            $lastModified,
+            null,
+        );
+    }
+
+    private function fallbackSvgResponse(
+        string $contents,
+        int $width,
+        int $height,
+        int $viewBoxWidth,
+        int $viewBoxHeight,
+        ?int $lastModified,
+        ?string $viewBox = null,
+    ) {
+        [$sourceWidth, $sourceHeight] = $this->getImageDimensions($contents);
+        $viewBoxWidth = $viewBoxWidth > 0 ? $viewBoxWidth : $sourceWidth;
+        $viewBoxHeight = $viewBoxHeight > 0 ? $viewBoxHeight : $sourceHeight;
+        $viewBox ??= "0 0 $viewBoxWidth $viewBoxHeight";
+        $image = base64_encode($contents);
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="'.$viewBox.'" preserveAspectRatio="xMidYMid meet">'
+            .'<image href="data:image/png;base64,'.$image.'" width="'.$sourceWidth.'" height="'.$sourceHeight.'" preserveAspectRatio="none"/></svg>';
+
+        $response = response($svg)->header('Content-Type', 'image/svg+xml');
+        if ($lastModified !== null) {
+            $response->setLastModified(Carbon::createFromTimestamp($lastModified));
+        }
+
+        return $response;
+    }
+
+    private function getImageDimensions(string $contents): array
+    {
+        $dimensions = function_exists('getimagesizefromstring')
+            ? @getimagesizefromstring($contents)
+            : null;
+
+        return [
+            max(1, (int) ($dimensions[0] ?? 64)),
+            max(1, (int) ($dimensions[1] ?? 64)),
+        ];
     }
 }
