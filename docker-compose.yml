@@ -1,0 +1,11 @@
+services:
+  app:
+    image: ${BLESSING_SKIN_IMAGE:-ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:latest}
+    ports:
+      - '${BLESSING_SKIN_PORT:-8080}:80'
+    volumes:
+      - blessing-skin-storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  blessing-skin-storage:

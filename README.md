@@ -60,7 +60,34 @@ Please read [Installation Guide](https://blessing.netlify.app/en/setup.html). Du
 
 ### Docker
 
-The repository includes a PHP 8.4 Apache image build. Mount a persistent directory at `/app/storage`, and configure your reverse proxy to forward `Host`, `X-Forwarded-Host`, `X-Forwarded-Port`, and `X-Forwarded-Proto`. `X-Forwarded-Port` preserves non-standard public ports such as `2333` in generated URLs.
+The project provides a PHP 8.4 Apache image and publishes it to GitHub Container Registry for every release. The image uses SQLite by default; visit the site root after the first start to complete setup. Persist `/app/storage`, which contains the database, configuration, plugins, and textures.
+
+Start the latest image with the repository Compose file:
+
+```bash
+docker compose up -d
+```
+
+The site is available at `http://localhost:8080` by default. To pin a release or change the port:
+
+```bash
+BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.12 \
+BLESSING_SKIN_PORT=2333 \
+docker compose up -d
+```
+
+To build the image from source:
+
+```bash
+docker build -t blessing-skin-server:local .
+docker run -d --name blessing-skin \
+  -p 8080:80 \
+  -v blessing-skin-storage:/app/storage \
+  --restart unless-stopped \
+  blessing-skin-server:local
+```
+
+When running behind a reverse proxy, forward `Host`, `X-Forwarded-Host`, `X-Forwarded-Port`, and `X-Forwarded-Proto`. `X-Forwarded-Port` preserves non-standard public ports such as `2333`. Keep the same `blessing-skin-storage` volume when upgrading.
 
 ## Plugin System
 

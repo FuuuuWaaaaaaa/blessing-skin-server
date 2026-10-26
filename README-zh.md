@@ -60,7 +60,34 @@ Blessing Skin 对您的服务器有一定的要求。在大多数情况下，下
 
 ### Docker
 
-项目提供 PHP 8.4 Apache 镜像构建文件。构建并启动前请为 `/app/storage` 挂载持久化目录，并通过反向代理转发 `Host`、`X-Forwarded-Host`、`X-Forwarded-Port` 和 `X-Forwarded-Proto`。其中 `X-Forwarded-Port` 用于保留非标准公网端口（例如 `2333`）。
+项目提供 PHP 8.4 Apache 镜像，并在发布版本时自动推送到 GitHub Container Registry。镜像内置 SQLite，首次启动后访问站点根路径完成安装；`/app/storage` 必须持久化，该目录包含数据库、配置、插件和材质文件。
+
+使用仓库提供的 Compose 文件启动最新镜像：
+
+```bash
+docker compose up -d
+```
+
+默认通过 `http://localhost:8080` 访问。指定版本或端口：
+
+```bash
+BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.12 \
+BLESSING_SKIN_PORT=2333 \
+docker compose up -d
+```
+
+也可以从源码构建镜像：
+
+```bash
+docker build -t blessing-skin-server:local .
+docker run -d --name blessing-skin \
+  -p 8080:80 \
+  -v blessing-skin-storage:/app/storage \
+  --restart unless-stopped \
+  blessing-skin-server:local
+```
+
+将站点放在反向代理后时，请转发 `Host`、`X-Forwarded-Host`、`X-Forwarded-Port` 和 `X-Forwarded-Proto`。其中 `X-Forwarded-Port` 用于保留非标准公网端口，例如 `2333`。升级时保留同一个 `blessing-skin-storage` 卷。
 
 ## 插件系统
 
