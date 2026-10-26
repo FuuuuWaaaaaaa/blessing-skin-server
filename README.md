@@ -65,8 +65,11 @@ The project provides a PHP 8.4 Apache image and publishes it to GitHub Container
 Start the latest image with the repository Compose file:
 
 ```bash
+echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
 docker compose up -d
 ```
+
+`GHCR_TOKEN` must have the `read:packages` scope. Skip the login if the GHCR package is public.
 
 The site is available at `http://localhost:8080` by default. To pin a release or change the port:
 

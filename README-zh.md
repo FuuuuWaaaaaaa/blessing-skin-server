@@ -65,8 +65,11 @@ Blessing Skin 对您的服务器有一定的要求。在大多数情况下，下
 使用仓库提供的 Compose 文件启动最新镜像：
 
 ```bash
+echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
 docker compose up -d
 ```
+
+其中 `GHCR_TOKEN` 需要具备 `read:packages` 权限；如果管理员已将 GHCR 包设为公开，可以跳过登录。
 
 默认通过 `http://localhost:8080` 访问。指定版本或端口：
 
