@@ -5,6 +5,9 @@ on:
     tags:
       - '*.*.*'
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - publish-release
 
 permissions:
   contents: write
