@@ -74,7 +74,7 @@ docker compose up -d
 The site is available at `http://localhost:8080` by default. To pin a release or change the port:
 
 ```bash
-BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.14 \
+BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.15 \
 BLESSING_SKIN_PORT=2333 \
 docker compose up -d
 ```
