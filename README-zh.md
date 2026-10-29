@@ -74,7 +74,7 @@ docker compose up -d
 默认通过 `http://localhost:8080` 访问。指定版本或端口：
 
 ```bash
-BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.12 \
+BLESSING_SKIN_IMAGE=ghcr.io/fuuuuwaaaaaaa/blessing-skin-server:6.0.13 \
 BLESSING_SKIN_PORT=2333 \
 docker compose up -d
 ```
